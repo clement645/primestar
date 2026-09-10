@@ -63,12 +63,18 @@ npm run db:seed
 
 The seed script creates:
 
-- An admin account: `admin@primestar.demo` / `ChangeMe123!` (**change immediately in production**)
-- Three demo workers: John Kamau (`JOHN01`), Mary Wanjiku (`MARY02`), Peter Mwangi (`PETER03`) — all with password `Worker123!`
+- An admin account (`admin@primestar.demo`) and three demo workers — John
+  Kamau (`JOHN01`), Mary Wanjiku (`MARY02`), Peter Mwangi (`PETER03`) —
+  each with a **freshly generated random password printed once to the
+  terminal output**. Save it immediately; it is never stored anywhere
+  else, and re-running the seed script does not reset it.
 - 27 Potato Farming Guide articles across all 4 sections
 - 6 sample blog posts
 - 6 crop-stage reminder rules
 - Default calculator assumptions and weather alert thresholds
+
+Never commit seed output, screenshots, or logs containing these passwords
+to a public repository.
 
 ### 5. Run the app
 

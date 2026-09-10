@@ -1,7 +1,17 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
+
+// Generates a fresh random password each time the seed runs, rather than a
+// fixed value baked into source control — a hardcoded seed password is
+// fine for a throwaway local database, but this script is also documented
+// as the first-deploy bootstrap step for a real production database, where
+// a published, predictable password would be a real credential leak.
+function randomPassword(): string {
+  return crypto.randomBytes(12).toString("base64url");
+}
 
 function readingMinutes(text: string) {
   const words = text.trim().split(/\s+/).length;
@@ -275,18 +285,21 @@ async function main() {
   });
 
   // --- Admin ---
-  const adminPasswordHash = await bcrypt.hash("ChangeMe123!", 10);
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@primestar.demo" },
-    update: {},
-    create: {
-      name: "Primestar Admin",
-      email: "admin@primestar.demo",
-      passwordHash: adminPasswordHash,
-      role: Role.ADMIN,
-    },
-  });
-  console.log(`Admin ready: ${admin.email} / ChangeMe123! (DEMO ONLY — change immediately)`);
+  const existingAdmin = await prisma.user.findUnique({ where: { email: "admin@primestar.demo" } });
+  if (existingAdmin) {
+    console.log(`Admin already exists: ${existingAdmin.email} (password left unchanged)`);
+  } else {
+    const adminPassword = randomPassword();
+    const admin = await prisma.user.create({
+      data: {
+        name: "Primestar Admin",
+        email: "admin@primestar.demo",
+        passwordHash: await bcrypt.hash(adminPassword, 10),
+        role: Role.ADMIN,
+      },
+    });
+    console.log(`Admin created: ${admin.email} / ${adminPassword} — SAVE THIS NOW, it is only shown once.`);
+  }
 
   // --- Demo workers ---
   const demoWorkers = [
@@ -296,24 +309,29 @@ async function main() {
   ];
 
   for (const w of demoWorkers) {
-    const passwordHash = await bcrypt.hash("Worker123!", 10);
-    const user = await prisma.user.upsert({
-      where: { email: w.email },
-      update: {},
-      create: {
-        name: w.name,
-        email: w.email,
-        passwordHash,
-        role: Role.WORKER,
-      },
-    });
+    const existing = await prisma.user.findUnique({ where: { email: w.email } });
+    let user = existing;
+
+    if (!existing) {
+      const password = randomPassword();
+      user = await prisma.user.create({
+        data: {
+          name: w.name,
+          email: w.email,
+          passwordHash: await bcrypt.hash(password, 10),
+          role: Role.WORKER,
+        },
+      });
+      console.log(`Demo worker created: ${w.name} — ${w.code} / login ${w.email} / ${password} — SAVE THIS NOW, it is only shown once.`);
+    } else {
+      console.log(`Demo worker already exists: ${w.name} — ${w.code} (password left unchanged)`);
+    }
 
     await prisma.worker.upsert({
-      where: { userId: user.id },
+      where: { userId: user!.id },
       update: {},
-      create: { userId: user.id, referralCode: w.code },
+      create: { userId: user!.id, referralCode: w.code },
     });
-    console.log(`Demo worker ready: ${w.name} — ${w.code} (login ${w.email} / Worker123!)`);
   }
 
   // --- Guide articles ---
