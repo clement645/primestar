@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: false,
+    // Several tests hit a real Postgres database (by design — see
+    // referral.test.ts). A remote database (e.g. Neon) adds real network
+    // latency per round trip, so the default 5s is too tight.
+    testTimeout: 15000,
   },
   resolve: {
     alias: {

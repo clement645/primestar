@@ -118,6 +118,8 @@ describe("referral click deduplication", () => {
   });
 
   it("Test 8: concurrent requests from the same IP produce only one counted click", async () => {
+    // Remote databases (e.g. Neon) add real network latency per round trip,
+    // so 10 concurrent inserts need more than Vitest's 5s default here.
     const user = await prisma.user.create({
       data: {
         name: "Concurrency Test Worker",
@@ -148,7 +150,7 @@ describe("referral click deduplication", () => {
 
     const dbCount = await prisma.referralClick.count({ where: { workerId: worker.id } });
     expect(dbCount).toBe(1);
-  });
+  }, 20000);
 
   it("hashIp never returns the raw IP", () => {
     const hash = hashIp("192.168.1.1");

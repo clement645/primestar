@@ -121,7 +121,8 @@ In **Site configuration → Environment variables**, add:
 
 | Variable | Value |
 |---|---|
-| `DATABASE_URL` | Your Neon pooled connection string |
+| `DATABASE_URL` | Your Neon **pooled** connection string (host ends in `-pooler`) |
+| `DIRECT_URL` | Your Neon **direct** connection string (no `-pooler`) — used only for migrations |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `REFERRAL_HASH_SECRET` | A different `openssl rand -base64 32` |
 | `NEXT_PUBLIC_SITE_URL` | Your Netlify site URL, e.g. `https://primestar-potatoes.netlify.app` |
@@ -131,10 +132,11 @@ In **Site configuration → Environment variables**, add:
 
 The build script (`npm run build`) runs `prisma generate && prisma migrate
 deploy && next build`, so migrations apply automatically on every deploy as
-long as `DATABASE_URL` is set as a **build** environment variable in
-Netlify (Netlify build environment variables are available at build time by
-default). This means there is no separate manual migration step for normal
-deploys.
+long as both `DATABASE_URL` and `DIRECT_URL` are set as **build**
+environment variables in Netlify (Netlify build environment variables are
+available at build time by default; `migrate deploy` specifically needs
+`DIRECT_URL` since it can't run through Neon's pooled/PgBouncer connection).
+This means there is no separate manual migration step for normal deploys.
 
 For the very first deploy, also seed demo data by running once from your
 own machine, pointed at the production database:
@@ -266,15 +268,16 @@ trace **Worker → Referral Click → WhatsApp Conversion → (future) Order**
 without a schema rewrite — see the `referral_code`/`worker_id` fields
 carried through each table.
 
-## What's intentionally left as a placeholder
+## What's still unverified/not yet supplied
 
-Per the original brief, no business facts were invented. The following are
-left as clearly marked editable placeholders in the UI and are safe to fill
-in without touching code (via `/admin/settings` where applicable):
+Per the original brief, no business facts were invented. "Since 2019" and
+the mission/vision statement have been filled in directly. The following
+are still not shown on the site because they haven't been supplied, and can
+be added without touching code (via `/admin/settings` where applicable):
 
-- Physical address, opening hours, contact email
-- Company history, mission/vision statement, certifications
-- Exact seed prices (a *default estimate* is configurable, not a fixed price)
+- Physical address, opening hours, a dedicated business email
+- Certifications, specific fertilizer product/rate recommendations, current market prices
+- Exact seed prices (a *default estimate* is configurable in the calculator, not a fixed price)
 - Yield guarantees, disease-resistance claims, exact maturity periods
 
 ## Security notes
