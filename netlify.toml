@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Referral tracking, WhatsApp click tracking, weather lookups, and all
+# authenticated dashboards run through Next.js Route Handlers / Server
+# Actions and the Proxy (middleware) — all deployed as Netlify Functions
+# by @netlify/plugin-nextjs. No standalone/always-on server is required.
+
+[build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"

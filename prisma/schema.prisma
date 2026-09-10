@@ -1,0 +1,355 @@
+// Primestar Potato Seeds — Prisma schema
+// Target: PostgreSQL (Neon / Supabase compatible)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // App runtime always uses the pooled connection (safe for many
+  // short-lived serverless function invocations). Migrations use the
+  // direct/unpooled connection, since PgBouncer's transaction-pooling mode
+  // doesn't support the session-level advisory locks `prisma migrate`
+  // needs. Prisma automatically picks directUrl for migrate/db-push
+  // commands and url for everything else.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth / accounts
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  WORKER
+  FARMER
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String?       @unique
+  phone        String?       @unique
+  passwordHash String        @map("password_hash")
+  role         Role
+  status       AccountStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  worker         Worker?
+  farmerProfile  FarmerProfile?
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Worker referral system
+// ---------------------------------------------------------------------------
+
+model Worker {
+  id           String        @id @default(cuid())
+  userId       String        @unique @map("user_id")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referralCode String        @unique @map("referral_code")
+  status       AccountStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  referralClicks       ReferralClick[]
+  whatsappConversions  WhatsappConversion[]
+
+  @@map("workers")
+}
+
+model ReferralClick {
+  id             String   @id @default(cuid())
+  workerId       String   @map("worker_id")
+  worker         Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  referralCode   String   @map("referral_code")
+  ipHash         String   @map("ip_hash")
+  visitorId      String?  @map("visitor_id")
+  landingPage    String   @map("landing_page")
+  deviceType     String?  @map("device_type")
+  source         String?  @default("direct")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // One counted click per IP per worker — enforced at the database level.
+  @@unique([workerId, ipHash], name: "worker_ip_unique")
+  @@index([workerId])
+  @@index([createdAt])
+  @@map("referral_clicks")
+}
+
+model WhatsappConversion {
+  id           String   @id @default(cuid())
+  workerId     String?  @map("worker_id")
+  worker       Worker?  @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  referralCode String?  @map("referral_code")
+  visitorId    String?  @map("visitor_id")
+  page         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([workerId])
+  @@index([createdAt])
+  @@map("whatsapp_conversions")
+}
+
+// ---------------------------------------------------------------------------
+// Content / blog
+// ---------------------------------------------------------------------------
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  content       String
+  excerpt       String?
+  category      String
+  featuredImage String?    @map("featured_image")
+  author        String     @default("Primestar Potato Seeds")
+  seoTitle      String?    @map("seo_title")
+  seoDescription String?   @map("seo_description")
+  readingMinutes Int?      @map("reading_minutes")
+  status        PostStatus @default(DRAFT)
+  publishedAt   DateTime?  @map("published_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@index([category])
+  @@map("blog_posts")
+}
+
+model GuideArticle {
+  id             String     @id @default(cuid())
+  title          String
+  slug           String     @unique
+  section        String // "getting-started" | "crop-management" | "pests-diseases" | "harvest-post-harvest"
+  content        String
+  excerpt        String?
+  featuredImage  String?    @map("featured_image")
+  author         String     @default("Primestar Potato Seeds")
+  readingMinutes Int?       @map("reading_minutes")
+  seoTitle       String?    @map("seo_title")
+  seoDescription String?    @map("seo_description")
+  status         PostStatus @default(PUBLISHED)
+  orderIndex     Int        @default(0) @map("order_index")
+  publishedAt    DateTime?  @map("published_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@index([section])
+  @@map("guide_articles")
+}
+
+// ---------------------------------------------------------------------------
+// Site settings (single-row configuration table)
+// ---------------------------------------------------------------------------
+
+model SiteSettings {
+  id                        Int      @id @default(1)
+  businessName              String   @default("Primestar Potato Seeds") @map("business_name")
+  businessDescription       String   @default("Quality potato seed information and practical farming knowledge for farmers.") @map("business_description")
+  whatsappNumber            String   @default("254728623619") @map("whatsapp_number")
+  facebookUrl               String   @default("https://www.facebook.com/profile.php?id=100082359937150") @map("facebook_url")
+  tiktokUrl                 String   @default("https://www.tiktok.com/@primestar.potato") @map("tiktok_url")
+  contactEmail              String?  @map("contact_email")
+  physicalAddress           String?  @map("physical_address")
+  openingHours              String?  @map("opening_hours")
+  referralAttributionDays   Int      @default(30) @map("referral_attribution_days")
+  seoDefaultTitle           String   @default("Primestar Potato Seeds | Quality Shangi Potato Seeds Kenya") @map("seo_default_title")
+  seoDefaultDescription     String   @default("Quality Shangi potato seeds and practical potato farming guidance for Kenyan farmers.") @map("seo_default_description")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Farmer account & personalization layer
+// ---------------------------------------------------------------------------
+
+model FarmerProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultRegion     String?   @map("default_region")
+  defaultPostalCode String?   @map("default_postal_code")
+  defaultLatitude   Float?    @map("default_latitude")
+  defaultLongitude  Float?    @map("default_longitude")
+  plantingDate      DateTime? @map("planting_date")
+  notifyWeather     Boolean   @default(true) @map("notify_weather")
+  notifyCropStage   Boolean   @default(true) @map("notify_crop_stage")
+  notifyAdmin       Boolean   @default(true) @map("notify_admin")
+  referralCode      String?   @map("referral_code") // attribution captured at signup, immutable afterwards
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  notifications  FarmerNotification[]
+  calculations   FarmerCalculation[]
+  sentReminders  SentCropReminder[]
+
+  @@map("farmer_profiles")
+}
+
+model WeatherCache {
+  id            String   @id @default(cuid())
+  locationKey   String   @unique @map("location_key")
+  latitude      Float
+  longitude     Float
+  provider      String   @default("open-meteo")
+  payload       Json
+  fetchedAt     DateTime @default(now()) @map("fetched_at")
+  expiresAt     DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("weather_cache")
+}
+
+enum NotificationType {
+  WEATHER
+  CROP_STAGE
+  ADMIN
+}
+
+enum Severity {
+  RED
+  AMBER
+  INFO
+}
+
+model FarmerNotification {
+  id          String            @id @default(cuid())
+  farmerId    String            @map("farmer_id")
+  farmer      FarmerProfile     @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  severity    Severity
+  title       String
+  message     String
+  sourceRef   String?           @map("source_ref") // stable identifier to prevent duplicate generation
+  readAt      DateTime?         @map("read_at")
+  dismissedAt DateTime?         @map("dismissed_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([farmerId, createdAt])
+  @@index([farmerId, readAt])
+  @@map("farmer_notifications")
+}
+
+enum AnnouncementStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model AdminAnnouncement {
+  id        String             @id @default(cuid())
+  title     String
+  message   String
+  severity  Severity
+  status    AnnouncementStatus @default(ACTIVE)
+  startsAt  DateTime?          @map("starts_at")
+  endsAt    DateTime?          @map("ends_at")
+  createdBy String?            @map("created_by")
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  @@map("admin_announcements")
+}
+
+model CropStageRule {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String
+  daysAfterPlanting   Int      @map("days_after_planting")
+  priority            Int      @default(0)
+  notificationMessage String   @map("notification_message")
+  status              AnnouncementStatus @default(ACTIVE)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  sentReminders SentCropReminder[]
+
+  @@map("crop_stage_rules")
+}
+
+model SentCropReminder {
+  id       String        @id @default(cuid())
+  farmerId String        @map("farmer_id")
+  farmer   FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  ruleId   String        @map("rule_id")
+  rule     CropStageRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  sentAt   DateTime      @default(now()) @map("sent_at")
+
+  @@unique([farmerId, ruleId])
+  @@map("sent_crop_reminders")
+}
+
+model WeatherAlertRuleConfig {
+  id                       Int      @id @default(1)
+  lateBlightHumidityPct    Float    @default(85) @map("late_blight_humidity_pct")
+  lateBlightMinTempC       Float    @default(10) @map("late_blight_min_temp_c")
+  lateBlightMaxTempC       Float    @default(25) @map("late_blight_max_temp_c")
+  plantingMinSoilTempC     Float    @default(7) @map("planting_min_soil_temp_c")
+  frostTempC               Float    @default(0) @map("frost_temp_c")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("weather_alert_rule_config")
+}
+
+// ---------------------------------------------------------------------------
+// Calculators
+// ---------------------------------------------------------------------------
+
+model CalculatorSettings {
+  id                     Int      @id @default(1)
+  seedBagsPerAcre        Float    @default(10) @map("seed_bags_per_acre")
+  seedBagWeightKg        Float    @default(65) @map("seed_bag_weight_kg")
+  defaultSeedPrice       Float    @default(2750) @map("default_seed_price")
+  minimumSellingPrice    Float    @default(1500) @map("minimum_selling_price")
+  maximumSellingPrice    Float    @default(5000) @map("maximum_selling_price")
+  otherCostMultiplier    Float    @default(1.5) @map("other_cost_multiplier")
+  minimumYieldMultiplier Float    @default(8) @map("minimum_yield_multiplier")
+  maximumYieldMultiplier Float    @default(12) @map("maximum_yield_multiplier")
+  disclaimer             String   @default("These are planning estimates. Actual costs, yields, weather, market prices and farm performance may differ.")
+  updatedBy              String?  @map("updated_by")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("calculator_settings")
+}
+
+model FarmerCalculation {
+  id                String        @id @default(cuid())
+  farmerId          String        @map("farmer_id")
+  farmer            FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  acres              Float
+  seedBags           Float         @map("seed_bags")
+  seedWeightKg       Float         @map("seed_weight_kg")
+  seedPrice          Float         @map("seed_price")
+  seedCost           Float         @map("seed_cost")
+  otherCosts         Float         @map("other_costs")
+  totalInvestment    Float         @map("total_investment")
+  minimumYieldBags   Float         @map("minimum_yield_bags")
+  maximumYieldBags   Float         @map("maximum_yield_bags")
+  sellingPrice       Float         @map("selling_price")
+  minimumRevenue     Float         @map("minimum_revenue")
+  maximumRevenue     Float         @map("maximum_revenue")
+  minimumProfit      Float         @map("minimum_profit")
+  maximumProfit      Float         @map("maximum_profit")
+  minimumRoi         Float         @map("minimum_roi")
+  maximumRoi         Float         @map("maximum_roi")
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  @@index([farmerId, createdAt])
+  @@map("farmer_calculations")
+}
