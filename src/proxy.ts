@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { auth } from "@/auth";
-import { getClientIp, trackReferralClick } from "@/lib/referral";
-import { REFERRAL_COOKIE_NAME, VISITOR_COOKIE_NAME } from "@/lib/constants";
-import { getSiteSettings } from "@/lib/settings";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
+import { VISITOR_COOKIE_NAME } from "@/lib/constants";
 
-// Next.js Proxy always runs on the Node.js runtime, so it can talk to
-// Postgres via Prisma directly — this is the server-side enforcement point
-// for the "one counted click per IP per worker" rule (sections 16-22, 57).
+// IMPORTANT: this file (and everything it imports) must never pull in
+// Prisma — Netlify's Next.js Middleware runtime can't load Prisma's native
+// query engine binary (`libquery_engine-*.so.node`), which broke the
+// original version of this proxy. Role checks use `authConfig` (a
+// Prisma-free, JWT-only Auth.js config — see auth.config.ts) rather than
+// the full `auth` export from src/auth.ts. Referral click tracking, which
+// does need Postgres, is delegated to /api/referral/track — an ordinary
+// Route Handler deployed as a full Netlify Function.
+const { auth } = NextAuth(authConfig);
+
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:png|jpg|jpeg|svg|webp|ico|css|js|map)$).*)",
@@ -20,8 +26,8 @@ const ROLE_GUARDS: { prefix: string; role: "ADMIN" | "WORKER" | "FARMER" }[] = [
   { prefix: "/farmer/dashboard", role: "FARMER" },
 ];
 
-export default auth(async (request) => {
-  const { pathname } = request.nextUrl;
+export default auth((request) => {
+  const { pathname, searchParams } = request.nextUrl;
 
   // Authorization is enforced HERE, before any page component runs — not
   // via redirect() inside the page/layout. Next's streaming renderer can
@@ -41,10 +47,31 @@ export default auth(async (request) => {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const response = NextResponse.next();
+  // Referral capture: hand off to the DB-backed tracking route rather than
+  // touching Postgres here (see note above), then it redirects back to a
+  // clean URL with no ?ref= — invisible to the visitor beyond one hop.
+  const ref = searchParams.get("ref");
+  if (ref) {
+    const cleanUrl = new URL(pathname, request.url);
+    searchParams.forEach((value, key) => {
+      if (key !== "ref") cleanUrl.searchParams.set(key, value);
+    });
 
-  // Ensure every visitor has an anonymous, non-identifying visitor id used
-  // only to correlate a browsing session with a later WhatsApp click.
+    const trackUrl = new URL("/api/referral/track", request.url);
+    trackUrl.searchParams.set("ref", ref);
+    trackUrl.searchParams.set("redirect", cleanUrl.pathname + cleanUrl.search);
+
+    const response = NextResponse.redirect(trackUrl);
+    setVisitorCookieIfMissing(request, response);
+    return response;
+  }
+
+  const response = NextResponse.next();
+  setVisitorCookieIfMissing(request, response);
+  return response;
+});
+
+function setVisitorCookieIfMissing(request: NextRequest, response: NextResponse) {
   if (!request.cookies.get(VISITOR_COOKIE_NAME)) {
     response.cookies.set(VISITOR_COOKIE_NAME, randomUUID(), {
       httpOnly: true,
@@ -54,38 +81,4 @@ export default auth(async (request) => {
       path: "/",
     });
   }
-
-  const ref = request.nextUrl.searchParams.get("ref");
-  if (!ref) return response;
-
-  try {
-    const ip = getClientIp(request.headers);
-    const result = await trackReferralClick({
-      referralCode: ref,
-      ip,
-      landingPage: pathname,
-      deviceType: /mobile/i.test(request.headers.get("user-agent") ?? "")
-        ? "mobile"
-        : "desktop",
-    });
-
-    // Only attribute the visit if the code turned out to be valid & active.
-    // Invalid/disabled codes are silently ignored — the site works normally
-    // (section 47, tests 6 & 7).
-    if (result.status === "counted" || result.status === "duplicate") {
-      const settings = await getSiteSettings();
-      response.cookies.set(REFERRAL_COOKIE_NAME, ref, {
-        httpOnly: false,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * settings.referralAttributionDays,
-        path: "/",
-      });
-    }
-  } catch (err) {
-    // Never break the customer experience because of a tracking failure.
-    console.error("referral tracking error", err);
-  }
-
-  return response;
-});
+}
