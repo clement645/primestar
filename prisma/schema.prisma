@@ -92,10 +92,16 @@ model WhatsappConversion {
   workerId     String?  @map("worker_id")
   worker       Worker?  @relation(fields: [workerId], references: [id], onDelete: SetNull)
   referralCode String?  @map("referral_code")
+  ipHash       String?  @map("ip_hash")
   visitorId    String?  @map("visitor_id")
   page         String
   createdAt    DateTime @default(now()) @map("created_at")
 
+  // One counted WhatsApp click per IP per worker — mirrors the referral
+  // click rule. Postgres treats NULL as distinct in a unique index, so
+  // unattributed clicks (workerId/ipHash null) are never deduplicated —
+  // there's no worker-fraud concern for those.
+  @@unique([workerId, ipHash], name: "worker_whatsapp_ip_unique")
   @@index([workerId])
   @@index([createdAt])
   @@map("whatsapp_conversions")

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { prisma } from "@/lib/db";
-import { trackReferralClick, hashIp } from "@/lib/referral";
+import { trackReferralClick, trackWhatsappClick, hashIp } from "@/lib/referral";
 
 // These tests hit a real (local/test) Postgres instance to exercise the
 // actual UNIQUE(worker_id, ip_hash) database constraint — the part of the
@@ -52,6 +52,7 @@ describe("referral click deduplication", () => {
     });
     const testUserIds = testUsers.map((u) => u.id);
     await prisma.referralClick.deleteMany({ where: { worker: { userId: { in: testUserIds } } } });
+    await prisma.whatsappConversion.deleteMany({ where: { worker: { userId: { in: testUserIds } } } });
     await prisma.worker.deleteMany({ where: { userId: { in: testUserIds } } });
     await prisma.user.deleteMany({ where: { id: { in: testUserIds } } });
     await prisma.$disconnect();
@@ -157,4 +158,124 @@ describe("referral click deduplication", () => {
     expect(hash).not.toContain("192.168.1.1");
     expect(hash).toMatch(/^[a-f0-9]{64}$/);
   });
+});
+
+describe("WhatsApp click deduplication", () => {
+  let workerId: string;
+
+  beforeAll(async () => {
+    const user = await prisma.user.create({
+      data: {
+        name: "WhatsApp Test Worker",
+        email: `whatsapp-test-${Date.now()}@example.com`,
+        passwordHash: "x",
+        role: "WORKER",
+      },
+    });
+    const worker = await prisma.worker.create({
+      data: { userId: user.id, referralCode: `WA${Date.now()}` },
+    });
+    workerId = worker.id;
+  });
+
+  afterAll(async () => {
+    const testUsers = await prisma.user.findMany({
+      where: { email: { contains: "@example.com" } },
+      select: { id: true },
+    });
+    const testUserIds = testUsers.map((u) => u.id);
+    await prisma.whatsappConversion.deleteMany({ where: { worker: { userId: { in: testUserIds } } } });
+    await prisma.worker.deleteMany({ where: { userId: { in: testUserIds } } });
+    await prisma.user.deleteMany({ where: { id: { in: testUserIds } } });
+  });
+
+  it("records the first WhatsApp click from an IP for a worker", async () => {
+    const result = await trackWhatsappClick({
+      workerId,
+      referralCode: null,
+      ip: "10.1.0.1",
+      page: "/shangi-seeds",
+    });
+    expect(result.status).toBe("recorded");
+
+    const count = await prisma.whatsappConversion.count({ where: { workerId } });
+    expect(count).toBe(1);
+  });
+
+  it("does not count a repeat WhatsApp click from the same IP for the same worker", async () => {
+    const result = await trackWhatsappClick({
+      workerId,
+      referralCode: null,
+      ip: "10.1.0.1",
+      page: "/contact",
+    });
+    expect(result.status).toBe("duplicate");
+
+    const count = await prisma.whatsappConversion.count({ where: { workerId } });
+    expect(count).toBe(1);
+  });
+
+  it("counts a WhatsApp click from a different IP for the same worker separately", async () => {
+    const result = await trackWhatsappClick({
+      workerId,
+      referralCode: null,
+      ip: "10.1.0.2",
+      page: "/shangi-seeds",
+    });
+    expect(result.status).toBe("recorded");
+
+    const count = await prisma.whatsappConversion.count({ where: { workerId } });
+    expect(count).toBe(2);
+  });
+
+  it("never deduplicates unattributed (no worker) WhatsApp clicks", async () => {
+    const first = await trackWhatsappClick({
+      workerId: null,
+      referralCode: null,
+      ip: "10.1.0.99",
+      page: "/",
+    });
+    const second = await trackWhatsappClick({
+      workerId: null,
+      referralCode: null,
+      ip: "10.1.0.99",
+      page: "/",
+    });
+    expect(first.status).toBe("recorded");
+    expect(second.status).toBe("recorded");
+  });
+
+  it("concurrent WhatsApp clicks from the same IP for the same worker produce only one recorded click", async () => {
+    const user = await prisma.user.create({
+      data: {
+        name: "WhatsApp Concurrency Worker",
+        email: `whatsapp-concurrency-${Date.now()}@example.com`,
+        passwordHash: "x",
+        role: "WORKER",
+      },
+    });
+    const worker = await prisma.worker.create({
+      data: { userId: user.id, referralCode: `WACONC${Date.now()}` },
+    });
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        trackWhatsappClick({
+          workerId: worker.id,
+          referralCode: worker.referralCode,
+          ip: "10.1.0.50",
+          page: "/",
+        })
+      )
+    );
+
+    const recorded = results.filter((r) => r.status === "recorded");
+    const duplicates = results.filter((r) => r.status === "duplicate");
+
+    expect(recorded.length).toBe(1);
+    expect(duplicates.length).toBe(9);
+
+    const dbCount = await prisma.whatsappConversion.count({ where: { workerId: worker.id } });
+    expect(dbCount).toBe(1);
+  }, 20000);
 });

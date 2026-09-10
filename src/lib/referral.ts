@@ -33,6 +33,16 @@ export function isValidReferralCodeFormat(code: string): boolean {
   return /^[A-Za-z0-9_-]{2,32}$/.test(code);
 }
 
+/** True when `err` is a Prisma unique-constraint violation (P2002). */
+function isUniqueConstraintError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "P2002"
+  );
+}
+
 export type ReferralTrackResult =
   | { status: "invalid" }
   | { status: "disabled" }
@@ -85,13 +95,45 @@ export async function trackReferralClick(params: {
   } catch (err: unknown) {
     // P2002 = unique constraint violation -> this IP was already counted
     // for this worker. This is the expected, common case, not an error.
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "code" in err &&
-      (err as { code?: string }).code === "P2002"
-    ) {
+    if (isUniqueConstraintError(err)) {
       return { status: "duplicate", workerId: worker.id };
+    }
+    throw err;
+  }
+}
+
+export type WhatsappTrackResult =
+  | { status: "recorded"; conversionId: string }
+  | { status: "duplicate" };
+
+/**
+ * Record a WhatsApp Click event, applying the same one-per-IP-per-worker
+ * rule as referral clicks (via the database's UNIQUE(worker_id, ip_hash)
+ * constraint on whatsapp_conversions) — this is what worker conversion
+ * rates are calculated from, so it needs the same fraud protection as
+ * referral clicks. Clicks with no worker attribution (workerId null) are
+ * always recorded — Postgres treats NULL as distinct in a unique index, so
+ * there's no dedup for them, matching that there's no worker-fraud concern
+ * for unattributed traffic.
+ */
+export async function trackWhatsappClick(params: {
+  workerId: string | null;
+  referralCode: string | null;
+  ip: string;
+  page: string;
+  visitorId?: string | null;
+}): Promise<WhatsappTrackResult> {
+  const { workerId, referralCode, ip, page, visitorId } = params;
+  const ipHash = hashIp(ip);
+
+  try {
+    const conversion = await prisma.whatsappConversion.create({
+      data: { workerId, referralCode, ipHash, page, visitorId },
+    });
+    return { status: "recorded", conversionId: conversion.id };
+  } catch (err: unknown) {
+    if (workerId && isUniqueConstraintError(err)) {
+      return { status: "duplicate" };
     }
     throw err;
   }
