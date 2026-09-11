@@ -56,6 +56,12 @@ export default function Header() {
               >
                 {session.user?.name?.split(" ")[0] ?? "Dashboard"}
               </Link>
+              <Link
+                href="/account"
+                className="text-sm font-semibold text-brand-dark/50 hover:text-brand-medium"
+              >
+                Account
+              </Link>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/" })}
@@ -134,13 +140,20 @@ export default function Header() {
                   >
                     Dashboard
                   </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setOpen(false)}
+                    className="rounded-full border-2 border-brand-lighter px-4 py-2.5 text-center text-sm font-semibold text-brand-dark"
+                  >
+                    Account
+                  </Link>
                   <button
                     type="button"
                     onClick={() => {
                       setOpen(false);
                       signOut({ callbackUrl: "/" });
                     }}
-                    className="rounded-full border-2 border-red-200 px-4 py-2.5 text-center text-sm font-semibold text-red-600"
+                    className="col-span-2 rounded-full border-2 border-red-200 px-4 py-2.5 text-center text-sm font-semibold text-red-600"
                   >
                     Sign Out
                   </button>

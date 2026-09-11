@@ -43,8 +43,10 @@ export default auth((request) => {
       return NextResponse.redirect(loginUrl);
     }
   }
-  if (pathname === "/dashboard" && !request.auth) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if ((pathname === "/dashboard" || pathname === "/account") && !request.auth) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Referral capture: hand off to the DB-backed tracking route rather than

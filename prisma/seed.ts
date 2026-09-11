@@ -212,51 +212,81 @@ const BLOG_POSTS: {
   },
 ];
 
+// A general potato crop-care calendar (planting -> harvest), used to build
+// each farmer's forward-looking timeline as well as due-notification
+// reminders. Timing is general guidance, not a guarantee — variety,
+// climate, and field conditions all shift these windows. Rules are
+// intentionally stored in the database (admin-configurable) rather than
+// hardcoded into UI, per section 64.
 const CROP_STAGE_RULES = [
   {
-    name: "Early Crop Establishment Check",
-    description: "Confirm even emergence and address any gaps.",
-    daysAfterPlanting: 14,
-    priority: 3,
-    notificationMessage:
-      "Your potato crop should be establishing now. Walk your field to check emergence and look out for any early pest activity.",
-  },
-  {
-    name: "Weeding & Field Monitoring Reminder",
-    description: "First weeding window and general field check.",
-    daysAfterPlanting: 21,
-    priority: 3,
-    notificationMessage:
-      "This is a good time to check your field for weeds and begin weeding if needed.",
-  },
-  {
-    name: "Earthing Up Reminder",
-    description: "First earthing up stage.",
-    daysAfterPlanting: 35,
-    priority: 4,
-    notificationMessage:
-      "Consider earthing up your potato crop now to protect developing tubers and support stronger stems.",
-  },
-  {
-    name: "Crop Monitoring — Mid Season",
-    description: "General pest/disease/nutrient check.",
-    daysAfterPlanting: 50,
+    name: "Emergence Check",
+    description: "Confirm even seedling emergence across the field.",
+    daysAfterPlanting: 10,
     priority: 2,
     notificationMessage:
-      "Walk your field this week to check for pests, disease symptoms, or signs of water stress.",
+      "Your potatoes should be emerging around now. Walk your field to check for even emergence and fill in any obvious gaps.",
   },
   {
-    name: "Disease & Pest Inspection",
-    description: "Heightened monitoring window as canopy closes.",
-    daysAfterPlanting: 60,
+    name: "Early Crop Establishment & First Weeding",
+    description: "First weeding window while plants are still small.",
+    daysAfterPlanting: 18,
     priority: 3,
     notificationMessage:
-      "Canopy closure can hide early disease symptoms — inspect your crop closely this week, especially the lower leaves.",
+      "This is a good time for your first weeding — young potato plants compete poorly with weeds for nutrients and water.",
+  },
+  {
+    name: "First Earthing Up",
+    description: "First earthing up, typically 3-4 weeks after planting.",
+    daysAfterPlanting: 25,
+    priority: 4,
+    notificationMessage:
+      "Your crop is around 3-4 weeks old — a good time for the first earthing up to protect developing tubers from light and support stronger stems.",
+  },
+  {
+    name: "Preventive Fungicide Application Window",
+    description: "General window many farmers consider a preventive fungicide spray.",
+    daysAfterPlanting: 35,
+    priority: 3,
+    notificationMessage:
+      "Many farmers consider a preventive fungicide application around this stage, especially in humid weather. Check your weather alerts for late blight risk, follow the approved product label, and consult a qualified agricultural officer for your situation.",
+  },
+  {
+    name: "Second Earthing Up",
+    description: "Second earthing up pass as the canopy fills in.",
+    daysAfterPlanting: 42,
+    priority: 3,
+    notificationMessage:
+      "Consider a second earthing up now, along with any remaining weeding, before the canopy closes and field access gets harder.",
+  },
+  {
+    name: "Mid-Season Pest & Disease Monitoring",
+    description: "Canopy closure can hide early symptoms.",
+    daysAfterPlanting: 55,
+    priority: 3,
+    notificationMessage:
+      "Canopy closure can hide early pest and disease symptoms — inspect your crop closely this week, especially the lower, older leaves.",
+  },
+  {
+    name: "Second Fungicide / Disease Management Window",
+    description: "Higher blight risk window during peak canopy growth.",
+    daysAfterPlanting: 65,
+    priority: 3,
+    notificationMessage:
+      "This stage often carries higher late blight pressure. Review current weather alerts, and if disease pressure is high, follow approved product labels and seek qualified agricultural advice on a follow-up fungicide application.",
+  },
+  {
+    name: "Pre-Harvest Monitoring",
+    description: "Watch for haulm die-back as the crop approaches maturity.",
+    daysAfterPlanting: 80,
+    priority: 2,
+    notificationMessage:
+      "Start watching for haulm (foliage) die-back — this is one of the signs your crop is approaching maturity.",
   },
   {
     name: "Harvest Preparation",
     description: "Begin planning harvest logistics.",
-    daysAfterPlanting: 90,
+    daysAfterPlanting: 95,
     priority: 4,
     notificationMessage:
       "Your crop may be approaching maturity. Start planning your harvest labour, storage space, and market arrangements.",

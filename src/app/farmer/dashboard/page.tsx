@@ -3,10 +3,12 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { geocodeRegion } from "@/lib/geocode";
+import { buildCropTimeline } from "@/lib/cropStage";
 import WeatherWidget from "@/components/farmer/WeatherWidget";
 import NotificationBell from "@/components/farmer/NotificationBell";
 import ProfileSettingsForm from "@/components/farmer/ProfileSettingsForm";
 import CalculationHistory from "@/components/farmer/CalculationHistory";
+import CropTimeline from "@/components/farmer/CropTimeline";
 
 export default async function FarmerDashboardPage() {
   const session = await auth();
@@ -36,6 +38,13 @@ export default async function FarmerDashboardPage() {
       locationLabel = farmer.defaultRegion;
     }
   }
+
+  const cropTimeline = farmer.plantingDate
+    ? buildCropTimeline(
+        farmer.plantingDate,
+        await prisma.cropStageRule.findMany({ where: { status: "ACTIVE" } })
+      )
+    : null;
 
   return (
     <div className="container-page py-10">
@@ -72,6 +81,12 @@ export default async function FarmerDashboardPage() {
           plantingDate={farmer.plantingDate ? farmer.plantingDate.toISOString().slice(0, 10) : ""}
         />
       </div>
+
+      {cropTimeline && (
+        <div className="mt-8">
+          <CropTimeline timeline={cropTimeline} />
+        </div>
+      )}
 
       <div className="mt-8 rounded-2xl bg-brand-lighter/60 p-6">
         <h2 className="font-heading text-lg font-bold text-brand-dark">Plan Your Farm</h2>
