@@ -5,6 +5,7 @@ import { auth, signOut } from "@/auth";
 const NAV = [
   { href: "/admin/dashboard", label: "Overview & Analytics" },
   { href: "/admin/workers", label: "Workers" },
+  { href: "/admin/farmers", label: "Farmers" },
   { href: "/admin/content", label: "Content" },
   { href: "/admin/settings", label: "Settings" },
 ];

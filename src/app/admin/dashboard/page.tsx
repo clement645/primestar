@@ -20,11 +20,12 @@ export default async function AdminOverviewPage({
   const range = sp.range ?? "7d";
   const { from, to } = resolveDateRange(range, sp.from, sp.to);
 
-  const [totalClicks, totalWhatsapp, activeWorkers, workers, clicksInRange, whatsappInRange] =
+  const [totalClicks, totalWhatsapp, activeWorkers, registeredFarmers, workers, clicksInRange, whatsappInRange] =
     await Promise.all([
       prisma.referralClick.count(),
       prisma.whatsappConversion.count(),
       prisma.worker.count({ where: { status: "ACTIVE" } }),
+      prisma.farmerProfile.count(),
       prisma.worker.findMany({
         include: { user: true, _count: { select: { referralClicks: true, whatsappConversions: true } } },
       }),
@@ -96,11 +97,12 @@ export default async function AdminOverviewPage({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Total Counted Referral Clicks" value={totalClicks.toLocaleString()} />
         <Stat label="Total WhatsApp Clicks" value={totalWhatsapp.toLocaleString()} />
         <Stat label="Overall Conversion Rate" value={`${conversionRate.toFixed(1)}%`} />
         <Stat label="Active Workers" value={activeWorkers.toLocaleString()} />
+        <Stat label="Registered Farmers" value={registeredFarmers.toLocaleString()} />
       </div>
 
       <div className="mt-8 rounded-2xl border border-brand-lighter bg-white p-6">
