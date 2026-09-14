@@ -1,16 +1,43 @@
-// Stock farm/potato photography used for visual identity across the site
-// (royalty-free, Unsplash License — free for commercial use, no
-// attribution required). These are generic agricultural imagery for mood
-// and are never captioned as depicting Primestar's own premises.
-
-function unsplash(id: string, width = 1600) {
-  return `https://images.unsplash.com/${id}?fm=jpg&q=80&w=${width}&auto=format&fit=crop`;
-}
+// Real photos from Primestar's own farm and store (added to /public),
+// used for visual identity across the site. These are Primestar's actual
+// premises, seed stock and branded gear — not stock photography.
 
 export const IMAGES = {
-  heroFarmField: unsplash("photo-1586249149466-ab4d39822001", 2000), // green Kenyan farmland
-  potatoFieldRows: unsplash("photo-1741003188234-1d031351168c", 2000), // rows of potato plants
-  handsWithPotatoes: unsplash("photo-1561635741-c416a5193b6e", 1400), // freshly harvested potatoes in hand
-  freshPotatoesPile: unsplash("photo-1675501344642-92d35d90fe51", 1600), // dug potatoes with soil
-  aerialGreenField: unsplash("photo-1714588419516-8c266d291dc7", 2000), // aerial farmland with dirt road
+  heroFarmField: "/potatoesonfarm.jpeg", // rows of potato plants on the farm
+  potatoFieldRows: "/potatoesonfarm2.jpeg", // potato rows with farm buildings in the background
+  seedlingCloseup: "/potatocrop.jpeg", // young potato seedling emerging from the soil
+  handsWithPotatoes: "/potatologo.jpeg", // inspecting a seed potato's eyes/sprouts
+  freshPotatoesPile: "/potatoseeds1.jpeg", // sprouted seed potatoes ready for planting
+  seedPotatoesGrass: "/potatoseeds2.jpeg", // seed potatoes with visible sprouts
+  seedSortingScale: "/potatoseeds3.jpeg", // seed potatoes laid out for sorting/chitting
+  storeBags: "/potatoseedsatstore.jpeg", // bagged seed at the Primestar store
+  teamBranding: "/primestar-team-reflector.jpeg", // Primestar-branded field gear
+  logo: "/primestar-logo.png", // cropped wordmark from the branded gear
 } as const;
+
+const SECTION_IMAGES: Record<string, string> = {
+  "getting-started": IMAGES.seedlingCloseup,
+  "crop-management": IMAGES.potatoFieldRows,
+  "pests-diseases": IMAGES.seedlingCloseup,
+  "harvest-post-harvest": IMAGES.freshPotatoesPile,
+};
+
+/** Fallback featured image for a Farming Guide article, by section. */
+export function getSectionImage(section: string): string {
+  return SECTION_IMAGES[section] ?? IMAGES.heroFarmField;
+}
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  "Potato Farming": IMAGES.heroFarmField,
+  Seeds: IMAGES.freshPotatoesPile,
+  "Crop Management": IMAGES.potatoFieldRows,
+  "Pest & Disease": IMAGES.seedlingCloseup,
+  Harvesting: IMAGES.seedSortingScale,
+  "Farmer Tips": IMAGES.handsWithPotatoes,
+  "Market Information": IMAGES.storeBags,
+};
+
+/** Fallback featured image for a blog post, by category. */
+export function getCategoryImage(category: string): string {
+  return CATEGORY_IMAGES[category] ?? IMAGES.heroFarmField;
+}

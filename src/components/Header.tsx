@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { IMAGES } from "@/lib/images";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -24,10 +26,18 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-brand-lighter bg-white/95 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-heading text-lg font-bold text-brand-dark">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-dark text-brand-cream">
-            🥔
-          </span>
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-heading text-lg font-bold text-brand-dark"
+        >
+          <Image
+            src={IMAGES.logo}
+            alt="Primestar Potato Seeds"
+            width={183}
+            height={36}
+            priority
+            className="h-9 w-auto rounded-md"
+          />
           <span className="hidden sm:inline">
             Primestar <span className="text-brand-medium">Potato Seeds</span>
           </span>
@@ -39,7 +49,9 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`text-sm font-medium transition-colors hover:text-brand-medium ${
-                pathname === link.href ? "text-brand-medium" : "text-brand-dark/80"
+                pathname === link.href
+                  ? "text-brand-medium"
+                  : "text-brand-dark/80"
               }`}
             >
               {link.label}
@@ -91,7 +103,7 @@ export default function Header() {
             className="!px-5 !py-2.5 text-sm"
             message="Hello Primestar, I am interested in Shangi potato seeds. Please give me more information."
           >
-            WhatsApp Us
+            WhatsApp Us Directly or through +254728623619
           </WhatsAppButton>
         </div>
 
@@ -102,11 +114,25 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-lighter text-brand-dark lg:hidden"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-6 w-6">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="h-6 w-6"
+          >
             {open ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+              />
             )}
           </svg>
         </button>
@@ -184,7 +210,7 @@ export default function Header() {
                 className="w-full"
                 message="Hello Primestar, I am interested in Shangi potato seeds. Please give me more information."
               >
-                WhatsApp Us
+                WhatsApp Us Directly or through +254728623619
               </WhatsAppButton>
             </div>
           </nav>

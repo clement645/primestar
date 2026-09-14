@@ -18,14 +18,14 @@ export default function AboutPage() {
     <div>
       <section className="relative isolate overflow-hidden">
         <Image
-          src={IMAGES.aerialGreenField}
-          alt="Aerial view of green farmland"
+          src={IMAGES.storeBags}
+          alt="Bagged seed potatoes at the Primestar store"
           fill
           priority
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-brand-dark/70" />
+        <div className="absolute inset-0 bg-brand-dark/75" />
         <div className="container-page relative py-16 text-center sm:py-24">
           <span className="text-sm font-semibold uppercase tracking-wide text-brand-light">
             About Primestar
@@ -33,6 +33,9 @@ export default function AboutPage() {
           <h1 className="mt-2 font-heading text-4xl font-extrabold text-white">
             Growing With Kenyan Farmers Since {FOUNDED_YEAR}
           </h1>
+          <p className="mt-3 text-lg font-medium italic text-white/85">
+            &ldquo;Quality Seeds, Better Harvests&rdquo;
+          </p>
         </div>
       </section>
 
@@ -45,7 +48,18 @@ export default function AboutPage() {
               to farmers in Kenya and sharing practical potato farming
               information since {FOUNDED_YEAR} — {yearsInOperation} years of
               working alongside farmers who grow the crop we care about.
+              We&apos;re based in Kimumu, Eldoret, and serve farmers across
+              the region.
             </p>
+            <div className="relative mt-6 aspect-[16/10] w-full overflow-hidden rounded-2xl">
+              <Image
+                src={IMAGES.teamBranding}
+                alt="Primestar Potato Seeds branded field gear"
+                fill
+                sizes="(min-width: 1024px) 700px, 100vw"
+                className="object-cover"
+              />
+            </div>
           </section>
 
           <section className="mt-10">

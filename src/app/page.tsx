@@ -198,10 +198,10 @@ export default function HomePage() {
       <section className="py-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {[
-            { src: IMAGES.potatoFieldRows, alt: "Rows of potato plants in the field" },
-            { src: IMAGES.handsWithPotatoes, alt: "Farmer's hands holding freshly harvested potatoes" },
-            { src: IMAGES.aerialGreenField, alt: "Aerial view of green farmland" },
-            { src: IMAGES.freshPotatoesPile, alt: "Freshly dug potatoes" },
+            { src: IMAGES.potatoFieldRows, alt: "Rows of potato plants on the Primestar farm" },
+            { src: IMAGES.handsWithPotatoes, alt: "Inspecting a seed potato's eyes and sprouts" },
+            { src: IMAGES.seedSortingScale, alt: "Seed potatoes laid out for sorting" },
+            { src: IMAGES.storeBags, alt: "Bagged seed at the Primestar store" },
           ].map((img) => (
             <div key={img.src} className="relative aspect-square overflow-hidden">
               <Image

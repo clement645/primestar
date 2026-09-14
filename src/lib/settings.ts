@@ -25,8 +25,8 @@ export async function getSiteSettings() {
     facebookUrl: FACEBOOK_URL,
     tiktokUrl: TIKTOK_URL,
     contactEmail: null,
-    physicalAddress: null,
-    openingHours: null,
+    physicalAddress: "Kimumu, Eldoret, Kenya",
+    openingHours: "24/7",
     referralAttributionDays: REFERRAL_ATTRIBUTION_DAYS_DEFAULT,
     seoDefaultTitle: "Primestar Potato Seeds | Quality Shangi Potato Seeds Kenya",
     seoDefaultDescription:

@@ -9,7 +9,7 @@ export default function StickyWhatsApp() {
         className="w-full"
         message="Hello Primestar, I am interested in Shangi potato seeds. Please give me more information."
       >
-        Chat With Primestar on WhatsApp
+        Chat With Primestar on WhatsApp Directly or through +254728623619
       </WhatsAppButton>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FACEBOOK_URL, TIKTOK_URL } from "@/lib/constants";
+import { getSiteSettings } from "@/lib/settings";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
 export const metadata: Metadata = {
@@ -8,7 +9,11 @@ export const metadata: Metadata = {
     "Contact Primestar Potato Seeds on WhatsApp, Facebook or TikTok for Shangi potato seed information.",
 };
 
-export default function ContactPage() {
+export const revalidate = 300;
+
+export default async function ContactPage() {
+  const settings = await getSiteSettings();
+
   return (
     <div className="container-page py-14">
       <div className="mx-auto max-w-2xl text-center">
@@ -40,15 +45,15 @@ export default function ContactPage() {
               Email
             </p>
             <p className="mt-1 text-brand-dark/70">
-              Reach us fastest on WhatsApp
+              {settings.contactEmail || "Reach us fastest on WhatsApp"}
             </p>
           </div>
           <div className="rounded-2xl border border-brand-lighter p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-medium">
-              Coverage
+              Location
             </p>
             <p className="mt-1 text-brand-dark/70">
-              Serving potato farmers across Kenya
+              {settings.physicalAddress || "Serving potato farmers across Kenya"}
             </p>
           </div>
           <div className="rounded-2xl border border-brand-lighter p-5">
@@ -56,7 +61,7 @@ export default function ContactPage() {
               Availability
             </p>
             <p className="mt-1 text-brand-dark/70">
-              Message us on WhatsApp any time — we respond as soon as we can
+              {settings.openingHours || "Message us on WhatsApp any time — we respond as soon as we can"}
             </p>
           </div>
         </div>

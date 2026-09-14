@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { getSectionImage } from "@/lib/images";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
 const SECTION_LABELS: Record<string, string> = {
@@ -74,7 +76,15 @@ export default async function GuideArticlePage({
           <span>{article.readingMinutes} min read</span>
         </div>
 
-        <div className="mt-8 h-52 w-full rounded-2xl bg-gradient-to-br from-brand-lighter to-brand-medium/30" />
+        <div className="relative mt-8 h-52 w-full overflow-hidden rounded-2xl">
+          <Image
+            src={article.featuredImage || getSectionImage(article.section)}
+            alt={article.title}
+            fill
+            sizes="(min-width: 768px) 700px, 100vw"
+            className="object-cover"
+          />
+        </div>
 
         <div className="prose prose-headings:font-heading prose-headings:text-brand-dark mt-8 max-w-none whitespace-pre-line text-brand-dark/80">
           {article.content}
