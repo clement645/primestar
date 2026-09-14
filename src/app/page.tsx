@@ -63,10 +63,8 @@ export default function HomePage() {
               information from Primestar Potato Seeds.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <WhatsAppButton
-                message="Hello Primestar, I am interested in Shangi potato seeds. Please give me more information."
-              >
-                Chat With Us on WhatsApp
+              <WhatsAppButton message="Hello Primestar, I am interested in Shangi potato seeds. Please give me more information.">
+                Click to Chat With Us on WhatsApp +254728623619
               </WhatsAppButton>
               <Link
                 href="/farming-guide"
@@ -119,8 +117,8 @@ export default function HomePage() {
             <p className="mt-3 text-brand-dark/75">
               Shangi is a widely grown potato variety among Kenyan farmers.
               Explore our dedicated guide covering seed selection, land
-              preparation, planting, spacing, crop management, pests,
-              diseases, harvesting and storage.
+              preparation, planting, spacing, crop management, pests, diseases,
+              harvesting and storage.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -198,12 +196,27 @@ export default function HomePage() {
       <section className="py-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {[
-            { src: IMAGES.potatoFieldRows, alt: "Rows of potato plants on the Primestar farm" },
-            { src: IMAGES.handsWithPotatoes, alt: "Inspecting a seed potato's eyes and sprouts" },
-            { src: IMAGES.seedSortingScale, alt: "Seed potatoes laid out for sorting" },
-            { src: IMAGES.storeBags, alt: "Bagged seed at the Primestar store" },
+            {
+              src: IMAGES.potatoFieldRows,
+              alt: "Rows of potato plants on the Primestar farm",
+            },
+            {
+              src: IMAGES.handsWithPotatoes,
+              alt: "Inspecting a seed potato's eyes and sprouts",
+            },
+            {
+              src: IMAGES.seedSortingScale,
+              alt: "Seed potatoes laid out for sorting",
+            },
+            {
+              src: IMAGES.storeBags,
+              alt: "Bagged seed at the Primestar store",
+            },
           ].map((img) => (
-            <div key={img.src} className="relative aspect-square overflow-hidden">
+            <div
+              key={img.src}
+              className="relative aspect-square overflow-hidden"
+            >
               <Image
                 src={img.src}
                 alt={img.alt}
@@ -223,8 +236,8 @@ export default function HomePage() {
             Follow Primestar
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-brand-cream/80">
-            Stay connected with Primestar Potato Seeds for potato farming
-            tips, seed information, farmer education, and updates.
+            Stay connected with Primestar Potato Seeds for potato farming tips,
+            seed information, farmer education, and updates.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
             <a
