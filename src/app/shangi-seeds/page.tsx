@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Image from "next/image";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { IMAGES } from "@/lib/images";
@@ -203,6 +204,24 @@ export default function ShangiSeedsPage() {
 
       <div className="container-page py-14">
         <div className="mx-auto max-w-3xl space-y-10">
+          <Link
+            href="/farming-guide/primestar-s-tested-one-acre-potato-farming-procedure"
+            className="block rounded-2xl border-2 border-brand-medium bg-brand-lighter/50 p-6 transition-colors hover:bg-brand-lighter/80"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wide text-brand-medium">
+              ✅ Signed &amp; Approved by Primestar
+            </span>
+            <h2 className="mt-1 font-heading text-xl font-bold text-brand-dark">
+              Primestar&apos;s Tested One-Acre Potato Farming Procedure
+            </h2>
+            <p className="mt-2 text-sm text-brand-dark/70">
+              Our own field-tested, step-by-step procedure — furrow width,
+              seed spacing, fertilizer rates, earthing-up timing, and our
+              recommended fungicide program by season. Read the full
+              procedure →
+            </p>
+          </Link>
+
           {SECTIONS.map((section, i) => (
             <section key={section.title}>
               <h2 className="font-heading text-2xl font-bold text-brand-dark">

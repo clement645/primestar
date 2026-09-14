@@ -131,7 +131,7 @@ export default async function AdminOverviewPage({
           label="Overall Conversion Rate"
           value={`${conversionRate.toFixed(1)}%`}
         />
-        <Stat label="Active Workers" value={activeWorkers.toLocaleString()} />
+        <Stat label="Active Employees" value={activeWorkers.toLocaleString()} />
         <Stat
           label="Registered Farmers"
           value={registeredFarmers.toLocaleString()}
@@ -149,17 +149,15 @@ export default async function AdminOverviewPage({
 
       <div className="mt-8 rounded-2xl border border-brand-lighter bg-white p-6">
         <h2 className="font-heading text-lg font-bold text-brand-dark">
-          Employee Performance
+          Employees Performance
         </h2>
         <div className="mt-4">
           <WorkerPerformanceChart
-            data={workerPerf
-              .slice(0, 8)
-              .map((w) => ({
-                name: w.code,
-                clicks: w.clicks,
-                whatsapp: w.whatsapp,
-              }))}
+            data={workerPerf.slice(0, 8).map((w) => ({
+              name: w.code,
+              clicks: w.clicks,
+              whatsapp: w.whatsapp,
+            }))}
           />
         </div>
 
@@ -167,7 +165,7 @@ export default async function AdminOverviewPage({
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead>
               <tr className="border-b border-brand-lighter text-brand-dark/60">
-                <th className="py-2">Employee</th>
+                <th className="py-2">Employees</th>
                 <th className="py-2">Referral Code</th>
                 <th className="py-2">Status</th>
                 <th className="py-2">Clicks</th>
